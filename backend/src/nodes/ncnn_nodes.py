@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import os
 from typing import Tuple
+import gc
 
 import numpy as np
 from ncnn_vulkan import ncnn
@@ -75,21 +76,23 @@ class NcnnUpscaleImageNode(NodeBase):
         exec_options = get_execution_options()
         # Try/except block to catch errors
         try:
-            vkdev = ncnn.get_gpu_device(exec_options.ncnn_gpu_index)
-            blob_vkallocator = ncnn.VkBlobAllocator(vkdev)
-            staging_vkallocator = ncnn.VkStagingAllocator(vkdev)
+            # vkdev = ncnn.get_gpu_device(exec_options.ncnn_gpu_index)
+            # blob_vkallocator = ncnn.VkBlobAllocator(vkdev)
+            # staging_vkallocator = ncnn.VkStagingAllocator(vkdev)
             output, _ = ncnn_auto_split_process(
                 img,
                 net,
                 input_name=input_name,
                 output_name=output_name,
-                blob_vkallocator=blob_vkallocator,
-                staging_vkallocator=staging_vkallocator,
+                # blob_vkallocator=blob_vkallocator,
+                # staging_vkallocator=staging_vkallocator,
                 max_depth=tile_mode if tile_mode > 0 else None,
+                device_id=exec_options.ncnn_gpu_index,
             )
             # blob_vkallocator.clear() # this slows stuff down
             # staging_vkallocator.clear() # as does this
-            # net.clear() # don't do this, it makes chaining break
+            # net.clear()  # don't do this, it makes chaining break
+            gc.collect()
             return output
         except ValueError as e:
             raise e
